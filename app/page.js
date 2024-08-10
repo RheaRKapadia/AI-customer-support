@@ -14,7 +14,7 @@ export default function Home() {
   const sendMessage = async()=>{
     setMessage('')
     setMessages((messages)=>[
-      ...messages, 
+      ...messages,
       {role:'user', content:message},
       {role:'assistant', content: ''},
     ])
@@ -30,7 +30,7 @@ export default function Home() {
       const decoder = new TextDecoder()
 
       let result = ''
-      return reader.read().then(function proccessText({done, value}){
+      return reader.read().then(function processText({done, value}){
         if (done){
           return result
         }
