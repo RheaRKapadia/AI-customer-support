@@ -1,4 +1,4 @@
-// File: /Users/lavanyanese/Documents/Repos/AI-customer-support/app/layout.js
+// File: C:\Users\ctala\AISupportChat_HP3\AI-customer-support\app\layout.js
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

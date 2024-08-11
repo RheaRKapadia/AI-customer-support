@@ -1,5 +1,8 @@
-import {NextResponse} from 'next/server'
-import OpenAI from 'openai'
+import { NextResponse } from 'next/server';
+const {
+  BedrockRuntimeClient,
+  ConverseCommand,
+} = require('@aws-sdk/client-bedrock-runtime');
 
 const systemPrompt = `You are a highly knowledgeable and empathetic customer support assistant for Headstarter AI, a platform that offers AI-powered interviews specifically for software engineering (SWE) jobs. Your primary role is to assist users with any questions or issues they may have regarding the platform. This includes explaining how the AI interview process works, providing guidance on preparing for interviews, troubleshooting technical problems, and addressing any concerns related to account management, subscriptions, or data privacy.
 
@@ -24,45 +27,57 @@ Example Questions You Might Handle:
 "I can't log in to my account—can you help?"
 "How is my interview data stored and who has access to it?"
 "Can I retake an interview if I didn't do well the first time?"
-Remember, your goal is to provide clear, accurate, and helpful information to ensure users have a smooth and positive experience on the Headstarter AI platform.`
+Remember, your goal is to provide clear, accurate, and helpful information to ensure users have a smooth and positive experience on the Headstarter AI platform.`;
 
 export async function POST(req) {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY})
-    console.log("API Key:", process.env.OPENAI_API_KEY)
+  // Create a new BedrockRuntimeClient instance with the specified region
+  const client = new BedrockRuntimeClient({ region: 'us-east-1' });
+  
+  // Model for conversation 
+  const modelId = 'anthropic.claude-3-haiku-20240307-v1:0';
 
-    const data = await req.json()
+  const data = await req.json();
 
-    const completion = await openai.chat.completions.create({
-        messages: [
-            {
-                role:'system',
-                content: systemPrompt,
-            },
-            ...data,
-        ],
-        model: 'gpt-4o-mini',
-        stream: true,
-    })
+  // Create a conversation array with the user's message
+  // Unable to prompt engineer the model. Chatgpt suggested to put "assistant" in same list but create pipeline error.
+  // Looked at documentation but seems like you can only specify role once per ConverseComman.
+  const conversation = [
+    {
+      role: 'user',
+      content: [{ text: data[0].content }],
+    },
+  ];
 
-    const stream = new ReadableStream({
-        async start(controller) {
-            const encoder = new TextEncoder()
-            try{
-                 for await (const chunk of completion){
-                    const content = chunk.choices[0]?.delta?.content
-                    if (content) {
-                        const text = encoder.encode(content)
-                        controller.enqueue(text)
-                    }
-                 }
-            }
-            catch(error) {
-                controller.error(err)
-            } finally {
-                controller.close()
-            }
-        }
-    })
+  // Create a new ConverseCommand with the specified model ID, conversation, and inference configuration
+  const command = new ConverseCommand({
+    modelId,
+    messages: conversation,
+    inferenceConfig: { maxTokens: 512, temperature: 0.5, topP: 0.9 },
+    stream : true,
+  });
 
-    return  new NextResponse(stream)
+  // Create a new ReadableStream to stream the response
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Send the ConverseCommand to the BedrockRuntimeClient
+      const response = await client.send(command);
+
+      // Iterate over the output messages and enqueue them to the stream
+      for await (const message of response.output.message.content) {
+        const chunk = new TextEncoder().encode(message.text);
+        controller.enqueue(chunk);
+      }
+
+      // Close the stream controller when the response is complete
+      controller.close();
+    },
+  });
+
+  // Return a new NextResponse with the stream. 
+  return new NextResponse(stream, {
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'no-cache',
+    },
+  });
 }
