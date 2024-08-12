@@ -24,6 +24,12 @@ export default function Home() {
       { role: 'assistant', content: '' },
     ]);
 
+    // Check if message is not empty before sending
+    if (!message.trim()) {
+      console.error('Error: Message cannot be empty');
+      return;
+    }
+
     // Send a POST request to the /api/chat endpoint with the user's message
     const response = await fetch('/api/chat', {
       method: 'POST',

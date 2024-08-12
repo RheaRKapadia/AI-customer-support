@@ -1,4 +1,4 @@
-// File: C:\Users\ctala\AISupportChat_HP3\AI-customer-support\app\page.js
+// File: /Users/rheakapadia/Desktop/AI-customer-support/app/page.js
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

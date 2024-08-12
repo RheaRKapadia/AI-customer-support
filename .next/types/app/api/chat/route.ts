@@ -1,4 +1,4 @@
-// File: C:\Users\ctala\AISupportChat_HP3\AI-customer-support\app\api\chat\route.js
+// File: /Users/rheakapadia/Desktop/AI-customer-support/app/api/chat/route.js
 import * as entry from '../../../../../app/api/chat/route.js'
 import type { NextRequest } from 'next/server.js'
 
